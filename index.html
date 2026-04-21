@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Қазақ тілі</title>
 
 <style>
@@ -11,30 +12,49 @@ body {
     font-family: "Segoe UI", sans-serif;
     background: linear-gradient(180deg, #1f1f2e, #121212);
     color: white;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .container {
+    width: 100%;
     max-width: 420px;
-    margin: auto;
-    padding: 15px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 .card {
     background: #1e1e2f;
     border-radius: 20px;
     padding: 20px;
-    margin-top: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
 }
 
 button {
     width: 100%;
     padding: 16px;
-    margin-top: 10px;
+    margin-top: 12px;
     border: none;
-    border-radius: 12px;
-    background: #00adb5;
+    border-radius: 14px;
+    background: linear-gradient(90deg, #00adb5, #00ffcc);
     color: white;
     font-size: 16px;
+    font-weight: bold;
+}
+
+button:active {
+    transform: scale(0.96);
 }
 
 .selected {
@@ -59,14 +79,14 @@ input {
     width: 100%;
     padding: 14px;
     box-sizing: border-box;
-    border-radius: 10px;
+    border-radius: 12px;
     border: none;
     margin-top: 10px;
 }
 
 .message {
     margin-top: 10px;
-    color: #ff6b6b;
+    font-size: 14px;
 }
 </style>
 </head>
@@ -75,17 +95,17 @@ input {
 
 <div class="container">
 
-<h2>📚 Изучение казахского языка</h2>
+<h2>📚 Қазақ тілін үйрену</h2>
 
 <div id="menu" class="card">
-    <h3>Выберите уровень</h3>
+    <h3>Деңгейді таңдаңыз</h3>
     <button onclick="chooseLevel('easy')">Лёгкий</button>
     <button onclick="chooseLevel('medium')">Средний</button>
     <button onclick="chooseLevel('hard')">Сложный</button>
 </div>
 
 <div id="tests" class="card" style="display:none;">
-    <h3>Выберите тест</h3>
+    <h3>Тест таңдаңыз</h3>
     <div id="testList"></div>
     <button onclick="goHome()">Назад</button>
 </div>
@@ -96,11 +116,11 @@ input {
     <div id="answers"></div>
     <input id="textAnswer" style="display:none;">
     <div class="message" id="message"></div>
-    <button onclick="submitAnswer()">Ответить</button>
+    <button onclick="submitAnswer()">Жауап беру</button>
 </div>
 
 <div id="result" class="card" style="display:none;">
-    <h3>Результат</h3>
+    <h3>Нәтиже</h3>
     <p id="score"></p>
     <button onclick="restartQuiz()">Заново</button>
     <button onclick="goHome()">На главную</button>
@@ -111,8 +131,14 @@ input {
 <script>
 
 // 🔊 звуки
-const correctSound = new Audio("https://zvukitop.com/wp-content/uploads/100-k-1-verno.mp3");
-const wrongSound = new Audio("zvuk-nepravilnogo-otveta-sto-k-odnomu.mp3");
+const correctSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3");
+const wrongSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3");
+
+// разблокировка звука на iPhone
+document.body.addEventListener("click", () => {
+    correctSound.play().then(()=>correctSound.pause()).catch(()=>{});
+    wrongSound.play().then(()=>wrongSound.pause()).catch(()=>{});
+}, { once: true });
 
 let currentQuestion = 0;
 let score = 0;
@@ -328,12 +354,12 @@ function submitAnswer(){
 
     if(userAnswer === correct){
         score++;
-        msg.innerText = "✅ Правильно!";
+        msg.innerText = "✅ Дұрыс!";
         msg.style.color = "#4caf50";
         correctSound.currentTime = 0;
         correctSound.play();
     } else {
-        msg.innerText = "❌ Ошибка! Правильный ответ: " + q.correct;
+        msg.innerText = "❌ Қате! Дұрыс жауап: " + q.correct;
         msg.style.color = "#f44336";
         wrongSound.currentTime = 0;
         wrongSound.play();
@@ -347,7 +373,7 @@ function submitAnswer(){
         } else {
             showResult();
         }
-    }, 2200);
+    }, 1500);
 }
 
 function showResult(){
@@ -355,7 +381,7 @@ function showResult(){
     let percent = Math.round((score/quizData.length)*100);
 
     document.getElementById("score").innerText =
-        "Правильно: " + score + "/" + quizData.length +
+        "Дұрыс: " + score + "/" + quizData.length +
         " | " + percent + "%" +
         " | " + time + " сек";
 

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Қазақ тілі</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background: linear-gradient(180deg, #1f1f2e, #121212);
+    color: white;
+}
+
+.container {
+    max-width: 420px;
+    margin: auto;
+    padding: 15px;
+}
+
+.card {
+    background: #1e1e2f;
+    border-radius: 20px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+button {
+    width: 100%;
+    padding: 16px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 12px;
+    background: #00adb5;
+    color: white;
+    font-size: 16px;
+}
+
+.selected {
+    background: #ff9800 !important;
+}
+
+.progress {
+    height: 8px;
+    background: #333;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #00adb5, #00ffcc);
+    width: 0%;
+}
+
+input {
+    width: 100%;
+    padding: 14px;
+    box-sizing: border-box;
+    border-radius: 10px;
+    border: none;
+    margin-top: 10px;
+}
+
+.message {
+    margin-top: 10px;
+    color: #ff6b6b;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>📚 Изучение казахского языка</h2>
+
+<div id="menu" class="card">
+    <h3>Выберите уровень</h3>
+    <button onclick="chooseLevel('easy')">Лёгкий</button>
+    <button onclick="chooseLevel('medium')">Средний</button>
+    <button onclick="chooseLevel('hard')">Сложный</button>
+</div>
+
+<div id="tests" class="card" style="display:none;">
+    <h3>Выберите тест</h3>
+    <div id="testList"></div>
+    <button onclick="goHome()">Назад</button>
+</div>
+
+<div id="quiz" class="card" style="display:none;">
+    <div class="progress"><div class="progress-bar" id="progress"></div></div>
+    <h3 id="question"></h3>
+    <div id="answers"></div>
+    <input id="textAnswer" style="display:none;">
+    <div class="message" id="message"></div>
+    <button onclick="submitAnswer()">Ответить</button>
+</div>
+
+<div id="result" class="card" style="display:none;">
+    <h3>Результат</h3>
+    <p id="score"></p>
+    <button onclick="restartQuiz()">Заново</button>
+    <button onclick="goHome()">На главную</button>
+</div>
+
+</div>
+
+<script>
+
+// 🔊 звуки
+const correctSound = new Audio("https://zvukitop.com/wp-content/uploads/100-k-1-verno.mp3");
+const wrongSound = new Audio("zvuk-nepravilnogo-otveta-sto-k-odnomu.mp3");
+
+let currentQuestion = 0;
+let score = 0;
+let quizData = [];
+let selectedAnswer = null;
+let currentLevel = "";
+let currentTestIndex = 0;
+let startTime = 0;
+
+function shuffle(arr){
+    return arr.sort(()=>Math.random()-0.5);
+}
+
+const quizzes = {
+
+easy: [
+
+[
+{q:"'Сәлем' аудармасы?", options:["Привет","Пока","Спасибо","Да"], correct:"Привет"},
+{q:"'Рахмет' деген не?", options:["Спасибо","Нет","Привет","Да"], correct:"Спасибо"},
+{q:"Мен ___ мектепке барамын", type:"input", correct:"күнде"},
+{q:"'Су' деген не?", options:["Вода","Еда","Дом","Дерево"], correct:"Вода"},
+{q:"'Кітап' деген не?", options:["Книга","Стол","Окно","Ручка"], correct:"Книга"},
+{q:"Бүгін ___ жақсы", type:"input", correct:"күн"},
+{q:"'Иә' деген не?", options:["Да","Нет","Пока","Спасибо"], correct:"Да"},
+{q:"'Жоқ' деген не?", options:["Да","Нет","Привет","Спасибо"], correct:"Нет"},
+{q:"Мен ___ жақсы көремін", type:"input", correct:"спорт"},
+{q:"'Қалайсың?' деген не?", options:["Как дела?","Кто ты?","Почему?","Где ты?"], correct:"Как дела?"}
+],
+
+[
+{q:"'Ана' деген не?", options:["Мама","Папа","Друг","Учитель"], correct:"Мама"},
+{q:"'Әке' деген не?", options:["Папа","Мама","Друг","Учитель"], correct:"Папа"},
+{q:"Мен ___ ішемін", type:"input", correct:"су"},
+{q:"'Ас' деген не?", options:["Еда","Вода","Дом","Стол"], correct:"Еда"},
+{q:"'Дос' деген не?", options:["Друг","Враг","Учитель","Родитель"], correct:"Друг"},
+{q:"Сен ___ жақсысың", type:"input", correct:"өте"},
+{q:"'Үй' деген не?", options:["Дом","Школа","Книга","Город"], correct:"Дом"},
+{q:"Мен ___ көремін", type:"input", correct:"фильм"},
+{q:"'Қала' деген не?", options:["Город","Деревня","Дом","Школа"], correct:"Город"},
+{q:"'Жол' деген не?", options:["Дорога","Дом","Книга","Река"], correct:"Дорога"}
+]
+
+],
+
+medium: [
+
+[
+{q:"'Мен үйдемін' перевод?", options:["Я дома","Я в школе","Я иду","Я сплю"], correct:"Я дома"},
+{q:"Ол ___ бара жатыр", type:"input", correct:"мектепке"},
+{q:"'Бүгін ауа райы жақсы' деген не?", options:["Сегодня хорошая погода","Сегодня холодно","Сегодня ночь","Сегодня дождь"], correct:"Сегодня хорошая погода"},
+{q:"Мен ___ оқимын", type:"input", correct:"кітап"},
+{q:"'Сен қайда барасың?' перевод?", options:["Куда ты идёшь?","Что ты делаешь?","Кто ты?","Когда ты идёшь?"], correct:"Куда ты идёшь?"},
+{q:"Біз ___ көреміз", type:"input", correct:"фильм"},
+{q:"'Ас' деген не?", options:["Еда","Вода","Дом","Напиток"], correct:"Еда"},
+{q:"Мен ___ ішемін", type:"input", correct:"су"},
+{q:"'Дос' деген не?", options:["Друг","Враг","Учитель","Родственник"], correct:"Друг"},
+{q:"Сен ___ жақсысың", type:"input", correct:"өте"}
+],
+
+[
+{q:"'Күн' деген не?", options:["Солнце","Луна","Звезда","Небо"], correct:"Солнце"},
+{q:"Мен ___ барамын", type:"input", correct:"университетке"},
+{q:"'Түн' деген не?", options:["Ночь","День","Утро","Вечер"], correct:"Ночь"},
+{q:"Ол ___ ішеді", type:"input", correct:"су"},
+{q:"'Жұмыс' деген не?", options:["Работа","Отдых","Сон","Учёба"], correct:"Работа"},
+{q:"Біз ___ оқимыз", type:"input", correct:"кітап"},
+{q:"'Мектеп' деген не?", options:["Школа","Дом","Город","Университет"], correct:"Школа"},
+{q:"Мен ___ көремін", type:"input", correct:"теледидар"},
+{q:"'Ойын' деген не?", options:["Игра","Работа","Сон","Учёба"], correct:"Игра"},
+{q:"Сен ___ барасың", type:"input", correct:"үйге"}
+]
+
+],
+
+hard: [
+
+[
+{q:"'Мен қазақ тілін үйреніп жатырмын' перевод?", options:["Я учу казахский язык","Я говорю","Я читаю","Я пишу"], correct:"Я учу казахский язык"},
+{q:"Олар ___ сөйлесіп отыр", type:"input", correct:"қазақша"},
+{q:"'Біз бірге жұмыс істейміз' перевод?", options:["Мы работаем вместе","Мы отдыхаем","Мы учимся","Мы гуляем"], correct:"Мы работаем вместе"},
+{q:"Мен ___ түсінбеймін", type:"input", correct:"сені"},
+{q:"'Сен не істеп жатырсың?' перевод?", options:["Что ты делаешь?","Где ты?","Почему ты здесь?","Когда ты пришёл?"], correct:"Что ты делаешь?"},
+{q:"Ол ___ жақсы көреді", type:"input", correct:"ән"},
+{q:"'Мен ертең келемін' перевод?", options:["Я приду завтра","Я дома","Я пришёл вчера","Я не приду"], correct:"Я приду завтра"},
+{q:"Біз ___ дайындалып жатырмыз", type:"input", correct:"сабаққа"},
+{q:"'Ол кітап оқып отыр' перевод?", options:["Он читает книгу","Он спит","Он пишет","Он играет"], correct:"Он читает книгу"},
+{q:"Мен ___ барамын", type:"input", correct:"университетке"}
+],
+
+[
+{q:"'Білім' деген не?", options:["Знание","Работа","Игра","Дом"], correct:"Знание"},
+{q:"Мен ___ оқып жатырмын", type:"input", correct:"сабақ"},
+{q:"'Уақыт' деген не?", options:["Время","День","Ночь","Год"], correct:"Время"},
+{q:"Ол ___ барады", type:"input", correct:"жұмысқа"},
+{q:"'Қызық' деген не?", options:["Интересно","Скучно","Трудно","Легко"], correct:"Интересно"},
+{q:"Біз ___ сөйлейміз", type:"input", correct:"қазақша"},
+{q:"'Түсіну' деген не?", options:["Понимать","Читать","Писать","Слушать"], correct:"Понимать"},
+{q:"Мен ___ үйренемін", type:"input", correct:"тіл"},
+{q:"'Жазу' деген не?", options:["Писать","Читать","Говорить","Слушать"], correct:"Писать"},
+{q:"Сен ___ білесің", type:"input", correct:"көп"}
+]
+
+]
+
+};
+
+
+function show(id){
+    ["menu","tests","quiz","result"].forEach(el=>{
+        document.getElementById(el).style.display="none";
+    });
+    document.getElementById(id).style.display="block";
+}
+
+function chooseLevel(level){
+    currentLevel = level;
+    let list = document.getElementById("testList");
+    list.innerHTML = "";
+
+    quizzes[level].forEach((_, index)=>{
+        let btn = document.createElement("button");
+        btn.innerText = "Тест " + (index+1);
+        btn.onclick = ()=> startQuiz(level, index);
+        list.appendChild(btn);
+    });
+
+    show("tests");
+}
+
+function startQuiz(level, index){
+    currentTestIndex = index;
+    currentQuestion = 0;
+    score = 0;
+
+    quizData = shuffle([...quizzes[level][index]]);
+    startTime = Date.now();
+
+    show("quiz");
+    loadQuestion();
+}
+
+function loadQuestion(){
+    selectedAnswer = null;
+
+    let msg = document.getElementById("message");
+    msg.innerText = "";
+    msg.style.color = "#ff6b6b";
+
+    let q = quizData[currentQuestion];
+    document.getElementById("question").innerText = q.q;
+    document.getElementById("answers").innerHTML = "";
+    document.getElementById("textAnswer").style.display = "none";
+
+    if(q.type === "input"){
+        document.getElementById("textAnswer").style.display = "block";
+        document.getElementById("textAnswer").value = "";
+    } else {
+        let options = shuffle([...q.options]);
+
+        options.forEach(opt=>{
+            let btn = document.createElement("button");
+            btn.innerText = opt;
+
+            btn.onclick = ()=>{
+                selectedAnswer = opt;
+                document.querySelectorAll("#answers button").forEach(b=>b.classList.remove("selected"));
+                btn.classList.add("selected");
+            };
+
+            document.getElementById("answers").appendChild(btn);
+        });
+    }
+
+    document.getElementById("progress").style.width =
+        ((currentQuestion)/quizData.length)*100 + "%";
+}
+
+function submitAnswer(){
+    let q = quizData[currentQuestion];
+    let answer;
+
+    if(q.type === "input"){
+        answer = document.getElementById("textAnswer").value;
+        if(!answer.trim()){
+            document.getElementById("message").innerText = "Введите ответ!";
+            return;
+        }
+    } else {
+        if(!selectedAnswer){
+            document.getElementById("message").innerText = "Выберите вариант!";
+            return;
+        }
+        answer = selectedAnswer;
+    }
+
+    let correct = q.correct.trim().toLowerCase();
+    let userAnswer = (answer + "").trim().toLowerCase();
+
+    let buttons = document.querySelectorAll("#answers button");
+
+    buttons.forEach(btn=>{
+        let txt = btn.innerText.trim().toLowerCase();
+        if(txt === correct){
+            btn.style.background = "#4caf50";
+        }
+        if(txt === userAnswer && userAnswer !== correct){
+            btn.style.background = "#f44336";
+        }
+    });
+
+    let msg = document.getElementById("message");
+
+    if(userAnswer === correct){
+        score++;
+        msg.innerText = "✅ Правильно!";
+        msg.style.color = "#4caf50";
+        correctSound.currentTime = 0;
+        correctSound.play();
+    } else {
+        msg.innerText = "❌ Ошибка! Правильный ответ: " + q.correct;
+        msg.style.color = "#f44336";
+        wrongSound.currentTime = 0;
+        wrongSound.play();
+    }
+
+    setTimeout(()=>{
+        currentQuestion++;
+
+        if(currentQuestion < quizData.length){
+            loadQuestion();
+        } else {
+            showResult();
+        }
+    }, 2200);
+}
+
+function showResult(){
+    let time = Math.floor((Date.now() - startTime)/1000);
+    let percent = Math.round((score/quizData.length)*100);
+
+    document.getElementById("score").innerText =
+        "Правильно: " + score + "/" + quizData.length +
+        " | " + percent + "%" +
+        " | " + time + " сек";
+
+    show("result");
+}
+
+function restartQuiz(){
+    startQuiz(currentLevel, currentTestIndex);
+}
+
+function goHome(){
+    show("menu");
+}
+
+</script>
+
+</body>
+</html>

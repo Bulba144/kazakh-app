@@ -95,17 +95,18 @@ input {
 
 <div class="container">
 
-<h2>📚 Қазақ тілін үйрену</h2>
+<h2>📚 Изучение казахского языка</h2>
 
 <div id="menu" class="card">
-    <h3>Деңгейді таңдаңыз</h3>
+    <h3>Выберите уровень</h3>
     <button onclick="chooseLevel('easy')">Лёгкий</button>
     <button onclick="chooseLevel('medium')">Средний</button>
     <button onclick="chooseLevel('hard')">Сложный</button>
+    <button onclick="startMixedQuiz()">Проверь себя</button>
 </div>
 
 <div id="tests" class="card" style="display:none;">
-    <h3>Тест таңдаңыз</h3>
+    <h3>Выберите тест</h3>
     <div id="testList"></div>
     <button onclick="goHome()">Назад</button>
 </div>
@@ -116,13 +117,13 @@ input {
     <div id="answers"></div>
     <input id="textAnswer" style="display:none;">
     <div class="message" id="message"></div>
-    <button onclick="submitAnswer()">Жауап беру</button>
+    <button onclick="submitAnswer()">Ответить</button>
 </div>
 
 <div id="result" class="card" style="display:none;">
-    <h3>Нәтиже</h3>
+    <h3>Результат</h3>
     <p id="score"></p>
-    <button onclick="restartQuiz()">Заново</button>
+    <button onclick="restartQuiz()">Пройти заново</button>
     <button onclick="goHome()">На главную</button>
 </div>
 
@@ -134,11 +135,30 @@ input {
 const correctSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3");
 const wrongSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3");
 
-// разблокировка звука на iPhone
-document.body.addEventListener("click", () => {
-    correctSound.play().then(()=>correctSound.pause()).catch(()=>{});
-    wrongSound.play().then(()=>wrongSound.pause()).catch(()=>{});
-}, { once: true });
+// 🔓 разблокировка звука (только при первом ответе)
+let soundUnlocked = false;
+
+function unlockSound(){
+    if(!soundUnlocked){
+        correctSound.volume = 0;
+        wrongSound.volume = 0;
+
+        correctSound.play().then(()=>{
+            correctSound.pause();
+            correctSound.currentTime = 0;
+        }).catch(()=>{});
+
+        wrongSound.play().then(()=>{
+            wrongSound.pause();
+            wrongSound.currentTime = 0;
+        }).catch(()=>{});
+
+        correctSound.volume = 1;
+        wrongSound.volume = 1;
+
+        soundUnlocked = true;
+    }
+}
 
 let currentQuestion = 0;
 let score = 0;
@@ -159,27 +179,53 @@ easy: [
 [
 {q:"'Сәлем' аудармасы?", options:["Привет","Пока","Спасибо","Да"], correct:"Привет"},
 {q:"'Рахмет' деген не?", options:["Спасибо","Нет","Привет","Да"], correct:"Спасибо"},
-{q:"Мен ___ мектепке барамын", type:"input", correct:"күнде"},
+{q:"Мен ___ мектепке барамын", type:"input", correct:["күнде","әр күн"]},
 {q:"'Су' деген не?", options:["Вода","Еда","Дом","Дерево"], correct:"Вода"},
 {q:"'Кітап' деген не?", options:["Книга","Стол","Окно","Ручка"], correct:"Книга"},
-{q:"Бүгін ___ жақсы", type:"input", correct:"күн"},
+{q:"Бүгін ___ жақсы", type:"input", correct:["күн","ауа райы"]},
 {q:"'Иә' деген не?", options:["Да","Нет","Пока","Спасибо"], correct:"Да"},
 {q:"'Жоқ' деген не?", options:["Да","Нет","Привет","Спасибо"], correct:"Нет"},
-{q:"Мен ___ жақсы көремін", type:"input", correct:"спорт"},
+{q:"Мен ___ жақсы көремін", type:"input", correct:["спорт","ойын"]},
 {q:"'Қалайсың?' деген не?", options:["Как дела?","Кто ты?","Почему?","Где ты?"], correct:"Как дела?"}
 ],
 
 [
 {q:"'Ана' деген не?", options:["Мама","Папа","Друг","Учитель"], correct:"Мама"},
 {q:"'Әке' деген не?", options:["Папа","Мама","Друг","Учитель"], correct:"Папа"},
-{q:"Мен ___ ішемін", type:"input", correct:"су"},
+{q:"Мен ___ ішемін", type:"input", correct:["су","шай","сүт"]},
 {q:"'Ас' деген не?", options:["Еда","Вода","Дом","Стол"], correct:"Еда"},
 {q:"'Дос' деген не?", options:["Друг","Враг","Учитель","Родитель"], correct:"Друг"},
-{q:"Сен ___ жақсысың", type:"input", correct:"өте"},
+{q:"Сен ___ жақсысың", type:"input", correct:["өте","керемет"]},
 {q:"'Үй' деген не?", options:["Дом","Школа","Книга","Город"], correct:"Дом"},
-{q:"Мен ___ көремін", type:"input", correct:"фильм"},
+{q:"Мен ___ көремін", type:"input", correct:["фильм","кино","сериал"]},
 {q:"'Қала' деген не?", options:["Город","Деревня","Дом","Школа"], correct:"Город"},
 {q:"'Жол' деген не?", options:["Дорога","Дом","Книга","Река"], correct:"Дорога"}
+],
+
+[
+{q:"'Алма' деген не?", options:["Яблоко","Груша","Апельсин","Банан"], correct:"Яблоко"},
+{q:"'Сүт' деген не?", options:["Молоко","Вода","Сок","Чай"], correct:"Молоко"},
+{q:"Мен ___ жеймін", type:"input", correct:["алма","тамақ"]},
+{q:"'Қант' деген не?", options:["Сахар","Соль","Хлеб","Вода"], correct:"Сахар"},
+{q:"'Нан' деген не?", options:["Хлеб","Мясо","Суп","Рис"], correct:"Хлеб"},
+{q:"Мен таңертең ___ ішемін", type:"input", correct:["шай","сүт"]},
+{q:"'Шай' деген не?", options:["Чай","Кофе","Сок","Вода"], correct:"Чай"},
+{q:"'Ет' деген не?", options:["Мясо","Рыба","Хлеб","Суп"], correct:"Мясо"},
+{q:"Мен кешке ___ жеймін", type:"input", correct:["тамақ","ет"]},
+{q:"'Тамақ' деген не?", options:["Еда","Напиток","Дом","Одежда"], correct:"Еда"}
+],
+
+[
+{q:"'Күн' деген не?", options:["Солнце","Луна","Звезда","Небо"], correct:"Солнце"},
+{q:"'Аспан' деген не?", options:["Небо","Земля","Вода","Дом"], correct:"Небо"},
+{q:"Мен ауа райын ___ деп ойлаймын", type:"input", correct:["жақсы","керемет"]},
+{q:"'Жер' деген не?", options:["Земля","Небо","Вода","Огонь"], correct:"Земля"},
+{q:"'Жаңбыр' деген не?", options:["Дождь","Снег","Ветер","Солнце"], correct:"Дождь"},
+{q:"Бүгін ___ жауады", type:"input", correct:["жаңбыр","қар"]},
+{q:"'Қар' деген не?", options:["Снег","Дождь","Лёд","Вода"], correct:"Снег"},
+{q:"'Жел' деген не?", options:["Ветер","Дождь","Снег","Солнце"], correct:"Ветер"},
+{q:"Қазір ___ соғып тұр", type:"input", correct:["жел"]},
+{q:"'Ауа' деген не?", options:["Воздух","Вода","Огонь","Земля"], correct:"Воздух"}
 ]
 
 ],
@@ -188,28 +234,54 @@ medium: [
 
 [
 {q:"'Мен үйдемін' перевод?", options:["Я дома","Я в школе","Я иду","Я сплю"], correct:"Я дома"},
-{q:"Ол ___ бара жатыр", type:"input", correct:"мектепке"},
+{q:"Ол ___ бара жатыр", type:"input", correct:["мектепке","үйге"]},
 {q:"'Бүгін ауа райы жақсы' деген не?", options:["Сегодня хорошая погода","Сегодня холодно","Сегодня ночь","Сегодня дождь"], correct:"Сегодня хорошая погода"},
-{q:"Мен ___ оқимын", type:"input", correct:"кітап"},
+{q:"Мен ___ оқимын", type:"input", correct:["кітап","мәтін"]},
 {q:"'Сен қайда барасың?' перевод?", options:["Куда ты идёшь?","Что ты делаешь?","Кто ты?","Когда ты идёшь?"], correct:"Куда ты идёшь?"},
-{q:"Біз ___ көреміз", type:"input", correct:"фильм"},
+{q:"Біз ___ көреміз", type:"input", correct:["фильм","кино"]},
 {q:"'Ас' деген не?", options:["Еда","Вода","Дом","Напиток"], correct:"Еда"},
-{q:"Мен ___ ішемін", type:"input", correct:"су"},
+{q:"Мен ___ ішемін", type:"input", correct:["су","шай"]},
 {q:"'Дос' деген не?", options:["Друг","Враг","Учитель","Родственник"], correct:"Друг"},
-{q:"Сен ___ жақсысың", type:"input", correct:"өте"}
+{q:"Сен ___ жақсысың", type:"input", correct:["өте","жақсы"]}
 ],
 
 [
-{q:"'Күн' деген не?", options:["Солнце","Луна","Звезда","Небо"], correct:"Солнце"},
-{q:"Мен ___ барамын", type:"input", correct:"университетке"},
-{q:"'Түн' деген не?", options:["Ночь","День","Утро","Вечер"], correct:"Ночь"},
-{q:"Ол ___ ішеді", type:"input", correct:"су"},
-{q:"'Жұмыс' деген не?", options:["Работа","Отдых","Сон","Учёба"], correct:"Работа"},
-{q:"Біз ___ оқимыз", type:"input", correct:"кітап"},
-{q:"'Мектеп' деген не?", options:["Школа","Дом","Город","Университет"], correct:"Школа"},
-{q:"Мен ___ көремін", type:"input", correct:"теледидар"},
-{q:"'Ойын' деген не?", options:["Игра","Работа","Сон","Учёба"], correct:"Игра"},
-{q:"Сен ___ барасың", type:"input", correct:"үйге"}
+{q:"'Мен жұмыс істеймін' перевод?", options:["Я работаю","Я отдыхаю","Я учусь","Я сплю"], correct:"Я работаю"},
+{q:"Ол ___ барады", type:"input", correct:["жұмысқа","мектепке"]},
+{q:"'Біз мектепте оқимыз' перевод?", options:["Мы учимся в школе","Мы гуляем","Мы отдыхаем","Мы спим"], correct:"Мы учимся в школе"},
+{q:"Мен ___ жазамын", type:"input", correct:["хат","мәтін"]},
+{q:"'Сен не істейсің?' перевод?", options:["Что ты делаешь?","Кто ты?","Где ты?","Когда ты идёшь?"], correct:"Что ты делаешь?"},
+{q:"Біз ___ сөйлейміз", type:"input", correct:["қазақша","орысша"]},
+{q:"'Ол кітап оқиды' перевод?", options:["Он читает книгу","Он спит","Он играет","Он пишет"], correct:"Он читает книгу"},
+{q:"Мен ___ тыңдаймын", type:"input", correct:["музыка","ән"]},
+{q:"'Олар бірге жүреді' перевод?", options:["Они идут вместе","Они спят","Они работают","Они учатся"], correct:"Они идут вместе"},
+{q:"Сен ___ келесің", type:"input", correct:["ертең","бүгін"]}
+],
+
+[
+{q:"'Мен кино көремін' перевод?", options:["Я смотрю фильм","Я читаю книгу","Я сплю","Я работаю"], correct:"Я смотрю фильм"},
+{q:"Ол ___ қарайды", type:"input", correct:["теледидар","фильм"]},
+{q:"'Біз бірге жүреміз' перевод?", options:["Мы идём вместе","Мы спим","Мы работаем","Мы читаем"], correct:"Мы идём вместе"},
+{q:"Мен ___ тыңдаймын", type:"input", correct:["музыка","ән"]},
+{q:"'Сен не көресің?' перевод?", options:["Что ты смотришь?","Что ты делаешь?","Кто ты?","Когда ты идёшь?"], correct:"Что ты смотришь?"},
+{q:"Біз ___ көреміз", type:"input", correct:["кино","фильм"]},
+{q:"'Ол музыка тыңдайды' перевод?", options:["Он слушает музыку","Он спит","Он читает","Он работает"], correct:"Он слушает музыку"},
+{q:"Мен ___ қараймын", type:"input", correct:["теледидар","фильм"]},
+{q:"'Олар бірге отырады' перевод?", options:["Они сидят вместе","Они бегают","Они спят","Они работают"], correct:"Они сидят вместе"},
+{q:"Сен ___ көресің", type:"input", correct:["кино","фильм"]}
+],
+
+[
+{q:"'Мен тамақ пісіремін' перевод?", options:["Я готовлю","Я ем","Я сплю","Я читаю"], correct:"Я готовлю"},
+{q:"Ол ___ жейді", type:"input", correct:["ет","тамақ"]},
+{q:"'Біз бірге тамақтанамыз' перевод?", options:["Мы едим вместе","Мы спим","Мы работаем","Мы читаем"], correct:"Мы едим вместе"},
+{q:"Мен ___ ішемін", type:"input", correct:["шай","су"]},
+{q:"'Сен не жейсің?' перевод?", options:["Что ты ешь?","Кто ты?","Где ты?","Когда ты идёшь?"], correct:"Что ты ешь?"},
+{q:"Біз ___ дайындаймыз", type:"input", correct:["тамақ","ас"]},
+{q:"'Ол ас дайындайды' перевод?", options:["Он готовит еду","Он спит","Он играет","Он читает"], correct:"Он готовит еду"},
+{q:"Мен ___ ұнатамын", type:"input", correct:["тамақ","ет"]},
+{q:"'Олар бірге ішеді' перевод?", options:["Они пьют вместе","Они спят","Они работают","Они читают"], correct:"Они пьют вместе"},
+{q:"Сен ___ ішесің", type:"input", correct:["су","шай"]}
 ]
 
 ],
@@ -218,34 +290,59 @@ hard: [
 
 [
 {q:"'Мен қазақ тілін үйреніп жатырмын' перевод?", options:["Я учу казахский язык","Я говорю","Я читаю","Я пишу"], correct:"Я учу казахский язык"},
-{q:"Олар ___ сөйлесіп отыр", type:"input", correct:"қазақша"},
+{q:"Олар ___ сөйлесіп отыр", type:"input", correct:["қазақша","орысша"]},
 {q:"'Біз бірге жұмыс істейміз' перевод?", options:["Мы работаем вместе","Мы отдыхаем","Мы учимся","Мы гуляем"], correct:"Мы работаем вместе"},
-{q:"Мен ___ түсінбеймін", type:"input", correct:"сені"},
+{q:"Мен ___ түсінбеймін", type:"input", correct:["сені","оны"]},
 {q:"'Сен не істеп жатырсың?' перевод?", options:["Что ты делаешь?","Где ты?","Почему ты здесь?","Когда ты пришёл?"], correct:"Что ты делаешь?"},
-{q:"Ол ___ жақсы көреді", type:"input", correct:"ән"},
+{q:"Ол ___ жақсы көреді", type:"input", correct:["ән","музыка"]},
 {q:"'Мен ертең келемін' перевод?", options:["Я приду завтра","Я дома","Я пришёл вчера","Я не приду"], correct:"Я приду завтра"},
-{q:"Біз ___ дайындалып жатырмыз", type:"input", correct:"сабаққа"},
+{q:"Біз ___ дайындалып жатырмыз", type:"input", correct:["сабаққа","емтиханға"]},
 {q:"'Ол кітап оқып отыр' перевод?", options:["Он читает книгу","Он спит","Он пишет","Он играет"], correct:"Он читает книгу"},
-{q:"Мен ___ барамын", type:"input", correct:"университетке"}
+{q:"Мен ___ барамын", type:"input", correct:["университетке","жұмысқа"]}
 ],
 
 [
-{q:"'Білім' деген не?", options:["Знание","Работа","Игра","Дом"], correct:"Знание"},
-{q:"Мен ___ оқып жатырмын", type:"input", correct:"сабақ"},
-{q:"'Уақыт' деген не?", options:["Время","День","Ночь","Год"], correct:"Время"},
-{q:"Ол ___ барады", type:"input", correct:"жұмысқа"},
-{q:"'Қызық' деген не?", options:["Интересно","Скучно","Трудно","Легко"], correct:"Интересно"},
-{q:"Біз ___ сөйлейміз", type:"input", correct:"қазақша"},
-{q:"'Түсіну' деген не?", options:["Понимать","Читать","Писать","Слушать"], correct:"Понимать"},
-{q:"Мен ___ үйренемін", type:"input", correct:"тіл"},
-{q:"'Жазу' деген не?", options:["Писать","Читать","Говорить","Слушать"], correct:"Писать"},
-{q:"Сен ___ білесің", type:"input", correct:"көп"}
+{q:"'Мен сені түсінемін' перевод?", options:["Я тебя понимаю","Я тебя не вижу","Я тебя ищу","Я тебя знаю"], correct:"Я тебя понимаю"},
+{q:"Ол ___ айтып жатыр", type:"input", correct:["шындық","әңгіме"]},
+{q:"'Біз бірге оқып жатырмыз' перевод?", options:["Мы учимся вместе","Мы отдыхаем","Мы работаем","Мы спим"], correct:"Мы учимся вместе"},
+{q:"Мен ___ жақсы көремін", type:"input", correct:["сені","оны"]},
+{q:"'Сен не ойлайсың?' перевод?", options:["Что ты думаешь?","Что ты делаешь?","Где ты?","Когда ты идёшь?"], correct:"Что ты думаешь?"},
+{q:"Олар ___ сөйлейді", type:"input", correct:["қазақша","орысша"]},
+{q:"'Мен оны көрдім' перевод?", options:["Я его видел","Я его не видел","Я его ищу","Я его знаю"], correct:"Я его видел"},
+{q:"Біз ___ барамыз", type:"input", correct:["үйге","мектепке"]},
+{q:"'Ол тез сөйлейді' перевод?", options:["Он говорит быстро","Он молчит","Он читает","Он пишет"], correct:"Он говорит быстро"},
+{q:"Мен ___ айттым", type:"input", correct:["шындық","сөз"]}
+],
+
+[
+{q:"'Мен бүгін жұмысқа барамын' перевод?", options:["Я сегодня иду на работу","Я дома","Я отдыхаю","Я сплю"], correct:"Я сегодня иду на работу"},
+{q:"Ол ___ сөйлеп жатыр", type:"input", correct:["телефонмен","досымен"]},
+{q:"'Біз ертең кездесеміз' перевод?", options:["Мы встретимся завтра","Мы спим","Мы работаем","Мы учимся"], correct:"Мы встретимся завтра"},
+{q:"Мен ___ күтіп отырмын", type:"input", correct:["сені","оны"]},
+{q:"'Сен қай жерде тұрасың?' перевод?", options:["Где ты живёшь?","Что ты делаешь?","Кто ты?","Когда ты идёшь?"], correct:"Где ты живёшь?"},
+{q:"Олар ___ келіп жатыр", type:"input", correct:["үйге","жұмысқа"]},
+{q:"'Мен оны жақсы түсінемін' перевод?", options:["Я его хорошо понимаю","Я его не понимаю","Я его ищу","Я его знаю"], correct:"Я его хорошо понимаю"},
+{q:"Біз ___ дайындалып жатырмыз", type:"input", correct:["кездесуге","сабаққа"]},
+{q:"'Ол тез жауап берді' перевод?", options:["Он быстро ответил","Он молчал","Он читал","Он писал"], correct:"Он быстро ответил"},
+{q:"Мен ___ айттым", type:"input", correct:["шындық","сөз"]}
+],
+
+[
+{q:"'Мен сабаққа дайындалып жатырмын' перевод?", options:["Я готовлюсь к уроку","Я сплю","Я отдыхаю","Я работаю"], correct:"Я готовлюсь к уроку"},
+{q:"Ол ___ жазып жатыр", type:"input", correct:["хат","мәтін"]},
+{q:"'Біз бірге саяхаттаймыз' перевод?", options:["Мы путешествуем вместе","Мы работаем","Мы учимся","Мы спим"], correct:"Мы путешествуем вместе"},
+{q:"Мен ___ күтемін", type:"input", correct:["сені","оны"]},
+{q:"'Сен қайда бара жатырсың?' перевод?", options:["Куда ты идёшь?","Что ты делаешь?","Кто ты?","Почему ты здесь?"], correct:"Куда ты идёшь?"},
+{q:"Олар ___ келеді", type:"input", correct:["ертең","бүгін"]},
+{q:"'Мен оны жақсы көремін' перевод?", options:["Я его люблю","Я его не люблю","Я его знаю","Я его ищу"], correct:"Я его люблю"},
+{q:"Біз ___ дайынбыз", type:"input", correct:["сабаққа","кездесуге"]},
+{q:"'Ол баяу сөйлейді' перевод?", options:["Он говорит медленно","Он говорит быстро","Он молчит","Он пишет"], correct:"Он говорит медленно"},
+{q:"Мен ___ үйреніп жатырмын", type:"input", correct:["қазақ тілін","тіл"]}
 ]
 
 ]
 
 };
-
 
 function show(id){
     ["menu","tests","quiz","result"].forEach(el=>{
@@ -281,6 +378,42 @@ function startQuiz(level, index){
     loadQuestion();
 }
 
+function startMixedQuiz(){
+
+    currentQuestion = 0;
+    score = 0;
+
+    let allQuestions = [];
+
+    Object.values(quizzes).forEach(level=>{
+        level.forEach(test=>{
+            test.forEach(q=>{
+                allQuestions.push(q);
+            });
+        });
+    });
+
+    let unique = [];
+    let seen = new Set();
+
+    allQuestions.forEach(q=>{
+        let key = q.q.trim().toLowerCase();
+        if(!seen.has(key)){
+            seen.add(key);
+            unique.push(q);
+        }
+    });
+
+    unique = shuffle(unique);
+
+    quizData = unique.slice(0, 30);
+
+    startTime = Date.now();
+
+    show("quiz");
+    loadQuestion();
+}
+  
 function loadQuestion(){
     selectedAnswer = null;
 
@@ -318,6 +451,9 @@ function loadQuestion(){
 }
 
 function submitAnswer(){
+
+    unlockSound();
+
     let q = quizData[currentQuestion];
     let answer;
 
@@ -335,34 +471,51 @@ function submitAnswer(){
         answer = selectedAnswer;
     }
 
-    let correct = q.correct.trim().toLowerCase();
     let userAnswer = (answer + "").trim().toLowerCase();
+
+    let isCorrect = false;
+
+    if(Array.isArray(q.correct)){
+        isCorrect = q.correct
+            .map(a => a.toLowerCase())
+            .includes(userAnswer);
+    } else {
+        isCorrect = q.correct.trim().toLowerCase() === userAnswer;
+    }
 
     let buttons = document.querySelectorAll("#answers button");
 
     buttons.forEach(btn=>{
         let txt = btn.innerText.trim().toLowerCase();
-        if(txt === correct){
-            btn.style.background = "#4caf50";
+
+        if(Array.isArray(q.correct)){
+            if(q.correct.map(a=>a.toLowerCase()).includes(txt)){
+                btn.style.background = "#4caf50";
+            }
+        } else {
+            if(txt === q.correct.trim().toLowerCase()){
+                btn.style.background = "#4caf50";
+            }
         }
-        if(txt === userAnswer && userAnswer !== correct){
+
+        if(txt === userAnswer && !isCorrect){
             btn.style.background = "#f44336";
         }
     });
 
     let msg = document.getElementById("message");
 
-    if(userAnswer === correct){
+    if(isCorrect){
         score++;
-        msg.innerText = "✅ Дұрыс!";
+        msg.innerText = "✅ Правильно!";
         msg.style.color = "#4caf50";
         correctSound.currentTime = 0;
-        correctSound.play();
+        correctSound.play().catch(()=>{});
     } else {
-        msg.innerText = "❌ Қате! Дұрыс жауап: " + q.correct;
+        msg.innerText = "❌ Ошибка! Правильный ответ: " + (Array.isArray(q.correct) ? q.correct.join(", ") : q.correct);
         msg.style.color = "#f44336";
         wrongSound.currentTime = 0;
-        wrongSound.play();
+        wrongSound.play().catch(()=>{});
     }
 
     setTimeout(()=>{
@@ -373,7 +526,7 @@ function submitAnswer(){
         } else {
             showResult();
         }
-    }, 1500);
+    }, 2200);
 }
 
 function showResult(){
@@ -381,9 +534,9 @@ function showResult(){
     let percent = Math.round((score/quizData.length)*100);
 
     document.getElementById("score").innerText =
-        "Дұрыс: " + score + "/" + quizData.length +
+        "Правильно: " + score + "/" + quizData.length +
         " | " + percent + "%" +
-        " | " + time + " сек";
+        " | " + time + " секунд";
 
     show("result");
 }
